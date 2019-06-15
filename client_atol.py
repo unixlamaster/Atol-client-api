@@ -95,53 +95,60 @@ class AtolClient(object):
         except Exception as e:
             raise        
 
+def check2dict(reestr):
+    sum = float(reestr[9].replace(',','.'))
+    check={
+      "external_id":datetime.now().strftime("777%s"),
+      "receipt":{
+        "client":{
+          "email":"email@mail.ru",
+          "name":reestr[5],
+        },
+        "company":{
+          "email":"support@alltelecom.ru",
+          "inn":"5544332219",
+          "payment_address":"https://v4.online.atol.ru"
+        },
+        "items":[
+          {
+            "name":'Договор {0}'.format(reestr[4]),
+            "price":sum,
+            "quantity":1,
+            "sum":sum,
+            "payment_method":"full_payment",
+            "payment_object":"commodity",
+          }
+        ],
+      "payments":[
+        {
+          "type":1,
+          "sum":sum
+        }
+        ],
+      "total":sum
+      },
+      "timestamp":'{0} {1}'.format(reestr[0],reestr[1])
+    }
+    return check
+
+atol_client = AtolClient({'url': 'https://testonline.atol.ru/possystem/v4', 'login':os.environ['ATOLLOGIN'], 'pass': os.environ['ATOLPASS'], 'group_code': 'v4-online-atol-ru_4179'})
+
 # Основной цикл парсера
 
-#for line in sys.stdin:
-#    ar = line.split(';')
-#    if len(ar) == 12:
-#        print (ar[6]," ",ar[10])
-
+for line in sys.stdin:
+    ar = line.split(';')
+    if len(ar) == 12:
+        print (ar[6]," ",ar[10])
+        print (check2dict(ar))
+        atol_client.send_check(check2dict(ar))
+        time.sleep(7)
+        atol_client.check_status()
 
 #r = requests.post('https://online.atol.ru/possystem/v4/getToken', data = {'login':'', 'pass':''})
 #r = requests.post('https://testonline.atol.ru/possystem/v4/getToken', data = {'login':'', 'pass':''}, headers = {'Content-type': 'application/json; charset=utf-8'})
 #r = requests.get('https://testonline.atol.ru/possystem/v4/getToken?login=login&pass=passs', headers = {'Content-type': 'application/json; charset=utf-8'})
 #print (r.json())
 
-check={
-  "external_id":"17052917661851314",
-  "receipt":{
-    "client":{
-      "email":"maxim@alltelecom.ru",
-      "name":"Иванов Иван Иванович",
-      "phone":"+79896292999"
-    },
-    "company":{
-      "email":"maxim@alltelecom.ru",
-      "inn":"5544332219",
-      "payment_address":"https://v4.online.atol.ru"
-    },
-    "items":[
-      {
-        "name":"Договор 123",
-        "price":1000.00,
-        "quantity":1,
-        "sum":1000.00,
-        "payment_method":"full_payment",
-        "payment_object":"commodity",
-      }
-    ],
-  "payments":[
-    {
-      "type":1,
-      "sum":1000.0
-    }
-    ],
-  "total":1000.0
-  },
-  "timestamp":"15.06.19 13:45:00"
-}
-atol_client = AtolClient({'url': 'https://testonline.atol.ru/possystem/v4', 'login':os.environ['ATOLLOGIN'], 'pass': os.environ['ATOLPASS'], 'group_code': 'v4-online-atol-ru_4179'})
-atol_client.send_check(check)
-time.sleep(7)
-atol_client.check_status()
+
+
+
