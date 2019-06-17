@@ -95,41 +95,42 @@ class AtolClient(object):
         except Exception as e:
             raise        
 
-def check2dict(reestr):
-    sum = float(reestr[9].replace(',','.'))
-    check={
-      "external_id":datetime.now().strftime("777%s"),
-      "receipt":{
-        "client":{
-          "email":"email@mail.ru",
-          "name":reestr[5],
-        },
-        "company":{
-          "email":"support@alltelecom.ru",
-          "inn":"5544332219",
-          "payment_address":"https://v4.online.atol.ru"
-        },
-        "items":[
-          {
-            "name":'Договор {0}'.format(reestr[4]),
-            "price":sum,
-            "quantity":1,
-            "sum":sum,
-            "payment_method":"full_payment",
-            "payment_object":"commodity",
-          }
-        ],
-      "payments":[
-        {
-          "type":1,
-          "sum":sum
+    def check2dict(reestr):
+        sum = float(reestr["amount"])
+        check={
+          "external_id":datetime.now().strftime("777%s"),
+          "receipt":{
+            "client":{
+              "email":reestr["email"],
+              "name":reestr["account_name"],
+              "phone":reestr["phone"]
+            },
+            "company":{
+              "email":"support@alltelecom.ru",
+              "inn":"5544332219",
+              "payment_address":"https://v4.online.atol.ru"
+            },
+            "items":[
+              {
+                "name":'Договор {0}'.format(reestr["agrm"].agrm_id),
+                "price":sum,
+                "quantity":1,
+                "sum":sum,
+                "payment_method":"full_payment",
+                "payment_object":"commodity",
+              }
+            ],
+          "payments":[
+            {
+              "type":1,
+              "sum":sum
+            }
+            ],
+          "total":sum
+          },
+          "timestamp":'{0} {1}'.format(reestr['data_pay'],reestr['time_pay'])
         }
-        ],
-      "total":sum
-      },
-      "timestamp":'{0} {1}'.format(reestr[0],reestr[1])
-    }
-    return check
+        return check
 
 atol_client = AtolClient({'url': 'https://testonline.atol.ru/possystem/v4', 'login':os.environ['ATOLLOGIN'], 'pass': os.environ['ATOLPASS'], 'group_code': 'v4-online-atol-ru_4179'})
 
@@ -139,8 +140,8 @@ for line in sys.stdin:
     ar = line.split(';')
     if len(ar) == 12:
         print (ar[6]," ",ar[10])
-        print (check2dict(ar))
-        atol_client.send_check(check2dict(ar))
+        print (atol_client.check2dict(ar))
+        atol_client.send_check(atol_client.check2dict(ar))
         time.sleep(7)
         atol_client.check_status()
 
