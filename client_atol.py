@@ -3,6 +3,7 @@ import requests
 import sys
 import os
 import time
+import re
 from datetime import timedelta
 from datetime import datetime
 
@@ -19,6 +20,7 @@ class AtolClient(object):
         self.header_request = {'Content-type': 'application/json; charset=utf-8'}
         self.group_code = options['group_code']
         self.uuid = ""
+        self.default_email = options['default_email']
 
     def request_get(self, url, header_request):
 #       GET      
@@ -95,15 +97,30 @@ class AtolClient(object):
         except Exception as e:
             raise        
 
-    def check2dict(reestr):
+    def validate_email(self, email):
+        res = re.search(r"([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)", email)
+        if res:
+            return res.group(0)
+        else:
+            return self.default_email
+    
+    def validate_phone(self, phone):
+        res = re.search(r"\+?(\d[0-9\s-]+)", phone)
+        if res:
+            newphone = re.sub(r'[\s\-]+', '', res.group(0), 0)
+            return newphone
+        else:
+            return ""
+        
+    def check2dict(self, reestr):
         sum = float(reestr["amount"])
         check={
           "external_id":datetime.now().strftime("777%s"),
           "receipt":{
             "client":{
-              "email":reestr["email"],
+              "email": self.validate_email(reestr["email"]),
               "name":reestr["account_name"],
-              "phone":reestr["phone"]
+              "phone": self.validate_phone(reestr["phone"])
             },
             "company":{
               "email":"support@alltelecom.ru",
@@ -132,18 +149,22 @@ class AtolClient(object):
         }
         return check
 
-atol_client = AtolClient({'url': 'https://testonline.atol.ru/possystem/v4', 'login':os.environ['ATOLLOGIN'], 'pass': os.environ['ATOLPASS'], 'group_code': 'v4-online-atol-ru_4179'})
+#atol_client = AtolClient({'url': 'https://testonline.atol.ru/possystem/v4', 
+#                          'login':os.environ['ATOLLOGIN'], 'pass': os.environ['ATOLPASS'],
+#                          'group_code': 'v4-online-atol-ru_4179',
+#                          'default_email': 'noreply-payments@alltelecom.ru'})
 
+#print (atol_client.validate_phone('dd +7 928 90870-25 olesy'))
+#sys.exit()
 # Основной цикл парсера
-
-for line in sys.stdin:
-    ar = line.split(';')
-    if len(ar) == 12:
-        print (ar[6]," ",ar[10])
-        print (atol_client.check2dict(ar))
-        atol_client.send_check(atol_client.check2dict(ar))
-        time.sleep(7)
-        atol_client.check_status()
+#for line in sys.stdin:
+#    ar = line.split(';')
+#    if len(ar) == 12:
+#        print (ar[6]," ",ar[10])
+#        print (atol_client.check2dict(ar))
+#        atol_client.send_check(atol_client.check2dict(ar))
+#        time.sleep(7)
+#        atol_client.check_status()
 
 #r = requests.post('https://online.atol.ru/possystem/v4/getToken', data = {'login':'', 'pass':''})
 #r = requests.post('https://testonline.atol.ru/possystem/v4/getToken', data = {'login':'', 'pass':''}, headers = {'Content-type': 'application/json; charset=utf-8'})
