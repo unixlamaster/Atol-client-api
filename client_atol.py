@@ -74,11 +74,11 @@ class AtolClient(object):
         try:
             r = self.request_post(url, header, data)
             if r["error"] == "null" or r["error"] == None :
-                print ('ok')
-                print (r)
+                print ('send_check - ok')
+                print ('response:',r)
                 self.uuid = r['uuid']
             else:
-                print (r)
+                print ("error, response:", r)
         except Exception as e:
             raise        
 
@@ -88,14 +88,20 @@ class AtolClient(object):
         header = self.header_request.copy()
         header["Token"] = self.getToken()
         try:
-            r = self.request_get(url, header)
-            if r["error"] == "null" or r["error"] == None :
-                print ('ok')
-                print (r)
-            else:
-                print (r)
+            return self.request_get(url, header)
         except Exception as e:
             raise        
+
+    def get_check_status(self):
+#	loop try get check
+        r={}
+        for i in range(5):
+            r=self.check_status()
+            if r["status"] == "done":
+                print (r)
+                return 'fn_number:{0};fiscal_doc_num:{1};fiscal_attr:{2}'.format(r["payload"]["fn_number"],r["payload"]["fiscal_document_number"],r["payload"]["fiscal_document_attribute"])
+            time.sleep(7)
+        return r["error"]["text"]
 
     def validate_email(self, email):
         res = re.search(r"([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)", email)
@@ -124,8 +130,8 @@ class AtolClient(object):
             },
             "company":{
               "email":"support@alltelecom.ru",
-              "inn":"5544332219",
-              "payment_address":"https://v4.online.atol.ru"
+              "inn":"6161049174",
+              "payment_address":"http://www.alltelecom.ru/"
             },
             "items":[
               {
